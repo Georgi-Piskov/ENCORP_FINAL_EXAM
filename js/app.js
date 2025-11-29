@@ -425,12 +425,24 @@ async function handleExpenseSubmit(e) {
             
             const result = await response.json();
             console.log('n8n response:', result); // Debug log
+            console.log('result.error:', result.error);
+            console.log('result.success:', result.success);
+            console.log('result.errorCode:', result.errorCode);
             
-            if (result.error || result.success === false) {
+            // Проверяваме за грешка по няколко начина
+            const isError = result.error === true || 
+                           result.success === false || 
+                           result.errorCode === 'INVALID_RECEIPT' ||
+                           result.valid === false;
+            
+            if (isError) {
                 // Показваме грешката с детайли ако има
                 let errorMessage = result.message || 'Грешка при обработка на разхода.';
                 if (result.details) {
-                    errorMessage += '\n' + result.details;
+                    errorMessage += '\n\n📋 Детайли: ' + result.details;
+                }
+                if (result.error_reason) {
+                    errorMessage += '\n\n📋 Причина: ' + result.error_reason;
                 }
                 if (result.suggestions && Array.isArray(result.suggestions)) {
                     errorMessage += '\n\n💡 Съвети:\n• ' + result.suggestions.join('\n• ');
