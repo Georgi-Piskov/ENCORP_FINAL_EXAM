@@ -424,42 +424,41 @@ async function handleExpenseSubmit(e) {
             }
             
             const result = await response.json();
-            console.log('n8n FULL response:', JSON.stringify(result, null, 2)); // Full debug
+            console.log('n8n FULL response:', result);
             
             // n8n може да върне данните в различни формати
-            // Опитваме да намерим правилните данни
             let data = result;
             
             // Ако е масив, вземаме първия елемент
             if (Array.isArray(result)) {
                 data = result[0] || {};
-                console.log('Response is array, using first element');
             }
-            // Ако има data property
-            if (result.data) {
-                data = result.data;
-                console.log('Using result.data');
+            // Ако има числов ключ (0, 1, etc.) - n8n понякога връща така
+            if (result['0']) {
+                data = result['0'];
             }
-            // Ако има json property (понякога n8n го увива така)
-            if (result.json) {
-                data = result.json;
-                console.log('Using result.json');
+            // Ако има ключ 'i' (от screenshot-а)
+            if (result.i !== undefined) {
+                data = result.i;
+            }
+            // Ако първият ключ е число или буква, вземаме стойността му
+            const keys = Object.keys(result);
+            if (keys.length === 1 && result[keys[0]] && typeof result[keys[0]] === 'object') {
+                data = result[keys[0]];
             }
             
             console.log('Extracted data:', data);
-            console.log('data.error:', data.error);
-            console.log('data.success:', data.success);
-            console.log('data.errorCode:', data.errorCode);
-            console.log('data.valid:', data.valid);
             
-            // Проверяваме за грешка по няколко начина
+            // Проверяваме за грешка
             const isError = data.error === true || 
                            data.success === false || 
                            data.errorCode === 'INVALID_RECEIPT' ||
                            data.valid === false;
             
+            console.log('isError:', isError);
+            
             if (isError) {
-                // Показваме грешката с детайли ако има
+                // Показваме грешката с детайли
                 let errorMessage = data.message || 'Грешка при обработка на разхода.';
                 if (data.details) {
                     errorMessage += '\n\n📋 Детайли: ' + data.details;
@@ -467,7 +466,12 @@ async function handleExpenseSubmit(e) {
                 if (data.error_reason) {
                     errorMessage += '\n\n📋 Причина: ' + data.error_reason;
                 }
-                if (data.suggestions && Array.isArray(data.suggestions)) {
+                if (data.suggestions && typeof data.suggestions === 'object') {
+                    const suggestionsArr = Object.values(data.suggestions);
+                    if (suggestionsArr.length > 0) {
+                        errorMessage += '\n\n💡 Съвети:\n• ' + suggestionsArr.join('\n• ');
+                    }
+                } else if (Array.isArray(data.suggestions)) {
                     errorMessage += '\n\n💡 Съвети:\n• ' + data.suggestions.join('\n• ');
                 }
                 showMessage(elements.expenseMessage, errorMessage, 'error');
