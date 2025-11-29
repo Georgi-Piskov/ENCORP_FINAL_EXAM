@@ -1,5 +1,5 @@
 // TechCorp Expense Tracker - Service Worker
-const CACHE_NAME = 'techcorp-expense-v1';
+const CACHE_NAME = 'techcorp-expense-v2';
 const STATIC_ASSETS = [
     '/ENCORP_FINAL_EXAM/',
     '/ENCORP_FINAL_EXAM/index.html',

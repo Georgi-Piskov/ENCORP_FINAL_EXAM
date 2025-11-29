@@ -42,10 +42,6 @@ const elements = {
     manualCurrency: document.getElementById('manualCurrency'),
     manualCategory: document.getElementById('manualCategory'),
     manualDescription: document.getElementById('manualDescription'),
-    manualReceiptFile: document.getElementById('manualReceiptFile'),
-    manualFilePreview: document.getElementById('manualFilePreview'),
-    manualFileName: document.getElementById('manualFileName'),
-    manualRemoveFile: document.getElementById('manualRemoveFile'),
     
     // Tabs
     tabBtns: document.querySelectorAll('.tab-btn'),
@@ -115,10 +111,13 @@ function showMessage(element, message, type = 'error') {
     element.className = `${element.className.split(' ')[0]} ${type}`;
     element.classList.remove('hidden');
     
-    // Auto hide after 5 seconds
+    // Scroll to message so user can see it
+    element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Auto hide after 8 seconds (longer for better visibility)
     setTimeout(() => {
         element.classList.add('hidden');
-    }, 5000);
+    }, 8000);
 }
 
 function formatCurrency(amount, currency = 'BGN') {
@@ -359,31 +358,6 @@ function initTabs() {
 }
 
 // =============================================
-// Manual File Upload Functions
-// =============================================
-function handleManualFileSelect(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (!CONFIG.ALLOWED_FILE_TYPES.includes(file.type)) {
-        showMessage(elements.expenseMessage, 'Невалиден формат на файла.', 'error');
-        elements.manualReceiptFile.value = '';
-        return;
-    }
-    
-    elements.manualFileName.textContent = file.name;
-    document.getElementById('manualFileUploadArea').classList.add('hidden');
-    elements.manualFilePreview.classList.remove('hidden');
-}
-
-function handleManualRemoveFile() {
-    elements.manualReceiptFile.value = '';
-    elements.manualFileName.textContent = '';
-    elements.manualFilePreview.classList.add('hidden');
-    document.getElementById('manualFileUploadArea').classList.remove('hidden');
-}
-
-// =============================================
 // Expense Functions
 // =============================================
 async function handleExpenseSubmit(e) {
@@ -428,7 +402,6 @@ async function handleExpenseSubmit(e) {
         const currency = elements.manualCurrency.value;
         const category = elements.manualCategory.value;
         const description = elements.manualDescription.value.trim();
-        const manualFile = elements.manualReceiptFile.files[0];
         
         if (!merchant || !date || !amount || !category || !description) {
             showMessage(elements.expenseMessage, 'Моля, попълнете всички задължителни полета.', 'error');
@@ -447,10 +420,6 @@ async function handleExpenseSubmit(e) {
         formData.append('currency', currency);
         formData.append('category', category);
         formData.append('description', description);
-        
-        if (manualFile) {
-            formData.append('receipt', manualFile);
-        }
     }
     
     showLoading();
@@ -467,8 +436,20 @@ async function handleExpenseSubmit(e) {
                 throw new Error('Webhook request failed with status: ' + response.status);
             }
             
-            const result = await response.json();
-            console.log('n8n RAW response:', JSON.stringify(result));
+            // Try to parse JSON response, handle empty or invalid responses
+            let result;
+            const responseText = await response.text();
+            console.log('n8n RAW response text:', responseText);
+            
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch (parseError) {
+                console.warn('Could not parse JSON response:', parseError);
+                // If we can't parse but response was OK, assume success
+                result = { success: true, message: 'Разходът е записан успешно!' };
+            }
+            
+            console.log('n8n parsed response:', JSON.stringify(result));
             
             // Функция за извличане на реалните данни от n8n отговора
             function extractData(obj) {
@@ -564,7 +545,6 @@ async function handleExpenseSubmit(e) {
 function resetExpenseForm() {
     elements.expenseForm.reset();
     handleRemoveFile();
-    handleManualRemoveFile();
     
     // Set today's date as default for manual entry
     const today = new Date().toISOString().split('T')[0];
@@ -802,14 +782,6 @@ function initEventListeners() {
     // File upload (receipt mode)
     elements.receiptFile.addEventListener('change', handleFileSelect);
     elements.removeFile.addEventListener('click', handleRemoveFile);
-    
-    // Manual file upload
-    if (elements.manualReceiptFile) {
-        elements.manualReceiptFile.addEventListener('change', handleManualFileSelect);
-    }
-    if (elements.manualRemoveFile) {
-        elements.manualRemoveFile.addEventListener('click', handleManualRemoveFile);
-    }
     
     // Set default date for manual entry
     if (elements.manualDate) {
