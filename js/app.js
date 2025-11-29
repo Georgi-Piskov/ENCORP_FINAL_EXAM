@@ -19,6 +19,7 @@ const elements = {
     lastName: document.getElementById('lastName'),
     employeeId: document.getElementById('employeeId'),
     userStatus: document.getElementById('userStatus'),
+    headerLogoutBtn: document.getElementById('headerLogoutBtn'),
     
     // Expense Form
     expenseSection: document.getElementById('expenseSection'),
@@ -273,10 +274,18 @@ function updateUserStatus(isLoggedIn) {
         statusDot.classList.remove('offline');
         statusDot.classList.add('online');
         statusText.textContent = `${state.currentUser.first_name} ${state.currentUser.last_name}`;
+        // Show logout button
+        if (elements.headerLogoutBtn) {
+            elements.headerLogoutBtn.classList.remove('hidden');
+        }
     } else {
         statusDot.classList.remove('online');
         statusDot.classList.add('offline');
         statusText.textContent = 'Не сте влезли';
+        // Hide logout button
+        if (elements.headerLogoutBtn) {
+            elements.headerLogoutBtn.classList.add('hidden');
+        }
     }
 }
 
@@ -790,6 +799,11 @@ function initEventListeners() {
     
     // Refresh button
     elements.refreshBtn.addEventListener('click', loadExpenses);
+    
+    // Header logout button
+    if (elements.headerLogoutBtn) {
+        elements.headerLogoutBtn.addEventListener('click', handleLogout);
+    }
     
     // Modal
     elements.modalClose.addEventListener('click', closeModal);

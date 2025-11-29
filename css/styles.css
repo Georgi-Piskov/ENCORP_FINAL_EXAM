@@ -98,6 +98,47 @@ body {
     color: var(--text-secondary);
 }
 
+/* User Info Container with Logout */
+.user-info-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-logout:hover {
+    background: #DC2626;
+    transform: scale(1.02);
+}
+
+.btn-logout i {
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    .btn-logout span {
+        display: none;
+    }
+    
+    .btn-logout {
+        padding: var(--spacing-sm);
+    }
+}
+
 .status-dot {
     width: 10px;
     height: 10px;
