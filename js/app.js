@@ -1119,16 +1119,21 @@ function renderPendingItem(expense) {
 async function approveExpense(expenseId) {
     if (!supabase) return;
     
+    console.log('Approving expense:', expenseId);
+    
     try {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('expenses')
             .update({ 
                 status: 'Approved',
                 status_reason: 'Ръчно одобрен от финансов директор'
             })
-            .eq('id', expenseId);
+            .eq('id', expenseId)
+            .select();
         
         if (error) throw error;
+        
+        console.log('Approve successful, updated:', data);
         
         // Remove item from list with animation
         const item = document.getElementById(`pending-${expenseId}`);
@@ -1152,14 +1157,21 @@ async function rejectExpense(expenseId) {
     
     const reason = prompt('Причина за отказ (незадължително):');
     
+    console.log('Rejecting expense:', expenseId, 'Reason:', reason);
+    
     try {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('expenses')
             .update({ 
                 status: 'Rejected',
                 status_reason: reason || 'Отказан от финансов директор'
             })
-            .eq('id', expenseId);
+            .eq('id', expenseId)
+            .select();
+        
+        if (error) throw error;
+        
+        console.log('Reject successful, updated:', data);
         
         if (error) throw error;
         
