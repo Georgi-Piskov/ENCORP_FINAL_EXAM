@@ -321,10 +321,21 @@ async function handleExpenseSubmit(e) {
             
             const result = await response.json();
             
-            if (result.error) {
+            if (result.error || result.success === false) {
                 showMessage(elements.expenseMessage, result.message || 'Грешка при обработка на разхода.', 'error');
             } else {
-                showMessage(elements.expenseMessage, 'Разходът е изпратен успешно за обработка!', 'success');
+                // Show appropriate message based on status
+                let messageType = 'success';
+                let message = result.message || 'Разходът е записан успешно!';
+                
+                if (result.expense && result.expense.status === 'Rejected') {
+                    messageType = 'error';
+                    message = `${result.message}\nПричина: ${result.expense.status_reason || 'Не отговаря на фирмената политика'}`;
+                } else if (result.expense && result.expense.status === 'Manual Review') {
+                    messageType = 'warning';
+                }
+                
+                showMessage(elements.expenseMessage, message, messageType);
                 
                 // Reset form
                 elements.expenseForm.reset();
@@ -359,11 +370,24 @@ async function loadExpenses() {
     
     try {
         if (supabase) {
-            const { data, error } = await supabase
+            // First try to get expenses by user_id
+            let { data, error } = await supabase
                 .from('expenses')
                 .select('*')
                 .eq('user_id', state.currentUser.id)
                 .order('created_at', { ascending: false });
+            
+            // If no expenses found by user_id, try without filter (for records with null user_id)
+            if ((!data || data.length === 0) && !error) {
+                const allExpenses = await supabase
+                    .from('expenses')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (!allExpenses.error) {
+                    data = allExpenses.data;
+                }
+            }
             
             if (error) throw error;
             

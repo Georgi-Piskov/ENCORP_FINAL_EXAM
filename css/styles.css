@@ -342,6 +342,13 @@ textarea::placeholder {
     border: 1px solid var(--danger);
 }
 
+.login-message.warning,
+.expense-message.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
 /* Section Header */
 .section-header {
     display: flex;
