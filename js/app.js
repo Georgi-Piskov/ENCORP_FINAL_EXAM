@@ -1070,6 +1070,8 @@ async function loadPendingApprovals() {
         
         if (error) throw error;
         
+        console.log('Loaded pending expenses:', pending);
+        
         if (!pending || pending.length === 0) {
             elements.pendingList.innerHTML = '';
             elements.noPendingMessage.classList.remove('hidden');
@@ -1157,9 +1159,22 @@ async function rejectExpense(expenseId) {
     
     const reason = prompt('Причина за отказ (незадължително):');
     
-    console.log('Rejecting expense:', expenseId, 'Reason:', reason);
+    console.log('Rejecting expense:', expenseId, 'Type:', typeof expenseId, 'Reason:', reason);
     
     try {
+        // First, check if the expense exists
+        const { data: existing, error: fetchError } = await supabase
+            .from('expenses')
+            .select('*')
+            .eq('id', expenseId)
+            .single();
+        
+        console.log('Found expense before update:', existing, 'Error:', fetchError);
+        
+        if (fetchError || !existing) {
+            throw new Error('Expense not found in database');
+        }
+        
         const { data, error } = await supabase
             .from('expenses')
             .update({ 
