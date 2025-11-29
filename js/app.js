@@ -70,6 +70,7 @@ const elements = {
     dirTotalCount: document.getElementById('dirTotalCount'),
     dirApprovedCount: document.getElementById('dirApprovedCount'),
     dirPendingCount: document.getElementById('dirPendingCount'),
+    dirRejectedCount: document.getElementById('dirRejectedCount'),
     pendingList: document.getElementById('pendingList'),
     noPendingMessage: document.getElementById('noPendingMessage'),
     
@@ -860,6 +861,7 @@ async function loadDirectorStats() {
             const total = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
             const approved = expenses.filter(e => e.status === 'Approved');
             const pending = expenses.filter(e => e.status === 'Manual Review');
+            const rejected = expenses.filter(e => e.status === 'Rejected');
             
             if (elements.dirTotalExpenses) {
                 elements.dirTotalExpenses.textContent = formatCurrency(total);
@@ -873,6 +875,16 @@ async function loadDirectorStats() {
             if (elements.dirPendingCount) {
                 elements.dirPendingCount.textContent = pending.length;
             }
+            if (elements.dirRejectedCount) {
+                elements.dirRejectedCount.textContent = rejected.length;
+            }
+        } else {
+            // Reset all stats to 0 if no expenses
+            if (elements.dirTotalExpenses) elements.dirTotalExpenses.textContent = '0.00 лв';
+            if (elements.dirTotalCount) elements.dirTotalCount.textContent = '0';
+            if (elements.dirApprovedCount) elements.dirApprovedCount.textContent = '0';
+            if (elements.dirPendingCount) elements.dirPendingCount.textContent = '0';
+            if (elements.dirRejectedCount) elements.dirRejectedCount.textContent = '0';
         }
     } catch (error) {
         console.error('Error loading director stats:', error);
@@ -1084,10 +1096,10 @@ async function approveExpense(expenseId) {
         const item = document.getElementById(`pending-${expenseId}`);
         if (item) {
             item.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
+            setTimeout(async () => {
                 item.remove();
                 checkEmptyPending();
-                loadDirectorStats(); // Update stats
+                await loadDirectorStats(); // Update stats
             }, 300);
         }
         
@@ -1117,10 +1129,10 @@ async function rejectExpense(expenseId) {
         const item = document.getElementById(`pending-${expenseId}`);
         if (item) {
             item.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
+            setTimeout(async () => {
                 item.remove();
                 checkEmptyPending();
-                loadDirectorStats(); // Update stats
+                await loadDirectorStats(); // Update stats
             }, 300);
         }
         
