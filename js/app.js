@@ -420,13 +420,22 @@ async function handleExpenseSubmit(e) {
             });
             
             if (!response.ok) {
-                throw new Error('Webhook request failed');
+                throw new Error('Webhook request failed with status: ' + response.status);
             }
             
             const result = await response.json();
+            console.log('n8n response:', result); // Debug log
             
             if (result.error || result.success === false) {
-                showMessage(elements.expenseMessage, result.message || 'Грешка при обработка на разхода.', 'error');
+                // Показваме грешката с детайли ако има
+                let errorMessage = result.message || 'Грешка при обработка на разхода.';
+                if (result.details) {
+                    errorMessage += '\n' + result.details;
+                }
+                if (result.suggestions && Array.isArray(result.suggestions)) {
+                    errorMessage += '\n\n💡 Съвети:\n• ' + result.suggestions.join('\n• ');
+                }
+                showMessage(elements.expenseMessage, errorMessage, 'error');
             } else {
                 // Show appropriate message based on status
                 let messageType = 'success';
