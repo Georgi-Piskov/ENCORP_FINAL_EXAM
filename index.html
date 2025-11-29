@@ -52,32 +52,113 @@
             <!-- Expense Form Section (Hidden until login) -->
             <section class="card expense-section hidden" id="expenseSection">
                 <h2><i class="fas fa-plus-circle"></i> Нов разход</h2>
+                
+                <!-- Input Type Tabs -->
+                <div class="input-tabs">
+                    <button type="button" class="tab-btn active" data-tab="receipt">
+                        <i class="fas fa-camera"></i> Снимка на бележка
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="manual">
+                        <i class="fas fa-keyboard"></i> Ръчно въвеждане
+                    </button>
+                </div>
+
                 <form id="expenseForm">
-                    <!-- File Upload -->
-                    <div class="form-group">
-                        <label>Снимка на касова бележка</label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" id="receiptFile" accept=".jpg,.jpeg,.png,.webp,.gif">
-                            <div class="file-upload-area" id="fileUploadArea">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Плъзнете файл тук или кликнете за избор</p>
-                                <span class="file-types">JPG, JPEG, PNG, WEBP, GIF</span>
+                    <!-- Tab Content: Receipt Upload -->
+                    <div class="tab-content active" id="receiptTab">
+                        <!-- File Upload -->
+                        <div class="form-group">
+                            <label>Снимка на касова бележка</label>
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="receiptFile" accept=".jpg,.jpeg,.png,.webp,.gif">
+                                <div class="file-upload-area" id="fileUploadArea">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Плъзнете файл тук или кликнете за избор</p>
+                                    <span class="file-types">JPG, JPEG, PNG, WEBP, GIF</span>
+                                </div>
+                                <div class="file-preview hidden" id="filePreview">
+                                    <img id="previewImage" src="" alt="Preview">
+                                    <button type="button" class="btn-remove" id="removeFile">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="file-preview hidden" id="filePreview">
-                                <img id="previewImage" src="" alt="Preview">
-                                <button type="button" class="btn-remove" id="removeFile">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                        </div>
+
+                        <!-- Comment for receipt -->
+                        <div class="form-group">
+                            <label for="comment">Допълнителен коментар (незадължително)</label>
+                            <textarea id="comment" rows="3" placeholder="Допълнителна информация за разхода..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Manual Entry -->
+                    <div class="tab-content" id="manualTab">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="manualMerchant">Търговец / Доставчик *</label>
+                                <input type="text" id="manualMerchant" placeholder="Напр. Lidl, OMV, Happy...">
+                            </div>
+                            <div class="form-group">
+                                <label for="manualDate">Дата на разхода *</label>
+                                <input type="date" id="manualDate">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="manualAmount">Сума *</label>
+                                <input type="number" id="manualAmount" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label for="manualCurrency">Валута</label>
+                                <select id="manualCurrency">
+                                    <option value="BGN" selected>BGN (лв)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manualCategory">Категория *</label>
+                            <select id="manualCategory">
+                                <option value="">-- Изберете категория --</option>
+                                <option value="food">🍔 Храна (магазин, закуски)</option>
+                                <option value="business_meal">🍽️ Служебен обяд/вечеря</option>
+                                <option value="transport">🚕 Градски транспорт / Такси</option>
+                                <option value="travel">✈️ Командировка (пътуване)</option>
+                                <option value="equipment">💻 Оборудване (компютри, телефони)</option>
+                                <option value="training">📚 Обучение / Курсове</option>
+                                <option value="other">📦 Други</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manualDescription">Описание на разхода *</label>
+                            <textarea id="manualDescription" rows="3" placeholder="Опишете за какво е разходът..."></textarea>
+                        </div>
+
+                        <!-- Optional: Attach receipt for manual entry too -->
+                        <div class="form-group">
+                            <label>Прикачи снимка (незадължително)</label>
+                            <div class="file-upload-wrapper small">
+                                <input type="file" id="manualReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif">
+                                <div class="file-upload-area small" id="manualFileUploadArea">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>Прикачи файл</span>
+                                </div>
+                                <div class="file-preview small hidden" id="manualFilePreview">
+                                    <span id="manualFileName"></span>
+                                    <button type="button" class="btn-remove small" id="manualRemoveFile">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Comment -->
-                    <div class="form-group">
-                        <label for="comment">Коментар / Описание</label>
-                        <textarea id="comment" rows="4" placeholder="Добавете допълнителна информация за разхода (търговец, вид разход, причина и т.н.)"></textarea>
-                        <small class="helper-text">Ако няма снимка, опишете разхода подробно тук.</small>
-                    </div>
+                    <input type="hidden" id="inputMode" value="receipt">
 
                     <button type="submit" class="btn btn-primary btn-large">
                         <i class="fas fa-paper-plane"></i> Изпрати разход

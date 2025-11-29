@@ -30,6 +30,23 @@ const elements = {
     previewImage: document.getElementById('previewImage'),
     removeFile: document.getElementById('removeFile'),
     comment: document.getElementById('comment'),
+    inputMode: document.getElementById('inputMode'),
+    
+    // Manual Entry Fields
+    manualMerchant: document.getElementById('manualMerchant'),
+    manualDate: document.getElementById('manualDate'),
+    manualAmount: document.getElementById('manualAmount'),
+    manualCurrency: document.getElementById('manualCurrency'),
+    manualCategory: document.getElementById('manualCategory'),
+    manualDescription: document.getElementById('manualDescription'),
+    manualReceiptFile: document.getElementById('manualReceiptFile'),
+    manualFilePreview: document.getElementById('manualFilePreview'),
+    manualFileName: document.getElementById('manualFileName'),
+    manualRemoveFile: document.getElementById('manualRemoveFile'),
+    
+    // Tabs
+    tabBtns: document.querySelectorAll('.tab-btn'),
+    tabContents: document.querySelectorAll('.tab-content'),
     
     // History
     historySection: document.getElementById('historySection'),
@@ -275,6 +292,53 @@ function handleRemoveFile() {
 }
 
 // =============================================
+// Tab Functions
+// =============================================
+function initTabs() {
+    elements.tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            
+            // Update active tab button
+            elements.tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update active tab content
+            elements.tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId + 'Tab').classList.add('active');
+            
+            // Update input mode
+            elements.inputMode.value = tabId;
+        });
+    });
+}
+
+// =============================================
+// Manual File Upload Functions
+// =============================================
+function handleManualFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!CONFIG.ALLOWED_FILE_TYPES.includes(file.type)) {
+        showMessage(elements.expenseMessage, 'Невалиден формат на файла.', 'error');
+        elements.manualReceiptFile.value = '';
+        return;
+    }
+    
+    elements.manualFileName.textContent = file.name;
+    document.getElementById('manualFileUploadArea').classList.add('hidden');
+    elements.manualFilePreview.classList.remove('hidden');
+}
+
+function handleManualRemoveFile() {
+    elements.manualReceiptFile.value = '';
+    elements.manualFileName.textContent = '';
+    elements.manualFilePreview.classList.add('hidden');
+    document.getElementById('manualFileUploadArea').classList.remove('hidden');
+}
+
+// =============================================
 // Expense Functions
 // =============================================
 async function handleExpenseSubmit(e) {
@@ -285,29 +349,66 @@ async function handleExpenseSubmit(e) {
         return;
     }
     
-    const file = elements.receiptFile.files[0];
-    const comment = elements.comment.value.trim();
+    const inputMode = elements.inputMode.value;
+    const formData = new FormData();
     
-    if (!file && !comment) {
-        showMessage(elements.expenseMessage, 'Моля, качете снимка или добавете описание на разхода.', 'error');
-        return;
+    // Common data
+    formData.append('firstName', state.currentUser.first_name);
+    formData.append('lastName', state.currentUser.last_name);
+    formData.append('employeeId', state.currentUser.employee_id);
+    formData.append('userId', state.currentUser.id);
+    formData.append('inputMode', inputMode);
+    
+    if (inputMode === 'receipt') {
+        // Receipt mode - upload image
+        const file = elements.receiptFile.files[0];
+        const comment = elements.comment.value.trim();
+        
+        if (!file && !comment) {
+            showMessage(elements.expenseMessage, 'Моля, качете снимка или добавете коментар.', 'error');
+            return;
+        }
+        
+        if (file) {
+            formData.append('receipt', file);
+        }
+        formData.append('comment', comment);
+        
+    } else {
+        // Manual mode - validate required fields
+        const merchant = elements.manualMerchant.value.trim();
+        const date = elements.manualDate.value;
+        const amount = elements.manualAmount.value;
+        const currency = elements.manualCurrency.value;
+        const category = elements.manualCategory.value;
+        const description = elements.manualDescription.value.trim();
+        const manualFile = elements.manualReceiptFile.files[0];
+        
+        if (!merchant || !date || !amount || !category || !description) {
+            showMessage(elements.expenseMessage, 'Моля, попълнете всички задължителни полета.', 'error');
+            return;
+        }
+        
+        if (parseFloat(amount) <= 0) {
+            showMessage(elements.expenseMessage, 'Моля, въведете валидна сума.', 'error');
+            return;
+        }
+        
+        formData.append('merchant', merchant);
+        formData.append('date', date);
+        formData.append('amount', amount);
+        formData.append('currency', currency);
+        formData.append('category', category);
+        formData.append('description', description);
+        
+        if (manualFile) {
+            formData.append('receipt', manualFile);
+        }
     }
     
     showLoading();
     
     try {
-        // Prepare form data for n8n webhook
-        const formData = new FormData();
-        formData.append('firstName', state.currentUser.first_name);
-        formData.append('lastName', state.currentUser.last_name);
-        formData.append('employeeId', state.currentUser.employee_id);
-        formData.append('userId', state.currentUser.id);
-        formData.append('comment', comment);
-        
-        if (file) {
-            formData.append('receipt', file);
-        }
-        
         // Send to n8n webhook
         if (CONFIG.N8N_WEBHOOK_URL !== 'YOUR_N8N_WEBHOOK_URL') {
             const response = await fetch(CONFIG.N8N_WEBHOOK_URL, {
@@ -338,20 +439,14 @@ async function handleExpenseSubmit(e) {
                 showMessage(elements.expenseMessage, message, messageType);
                 
                 // Reset form
-                elements.expenseForm.reset();
-                handleRemoveFile();
+                resetExpenseForm();
                 
                 // Reload expenses after a short delay
                 setTimeout(() => loadExpenses(), 2000);
             }
         } else {
             // Demo mode
-            console.log('Demo mode: Симулация на изпращане на разход', {
-                user: state.currentUser,
-                comment,
-                hasFile: !!file
-            });
-            
+            console.log('Demo mode: Симулация на изпращане на разход', formData);
             showMessage(elements.expenseMessage, 'Demo режим: n8n webhook не е конфигуриран.', 'error');
         }
         
@@ -361,6 +456,18 @@ async function handleExpenseSubmit(e) {
     }
     
     hideLoading();
+}
+
+function resetExpenseForm() {
+    elements.expenseForm.reset();
+    handleRemoveFile();
+    handleManualRemoveFile();
+    
+    // Set today's date as default for manual entry
+    const today = new Date().toISOString().split('T')[0];
+    if (elements.manualDate) {
+        elements.manualDate.value = today;
+    }
 }
 
 async function loadExpenses() {
@@ -555,9 +662,25 @@ function initEventListeners() {
     // Expense form
     elements.expenseForm.addEventListener('submit', handleExpenseSubmit);
     
-    // File upload
+    // Initialize tabs
+    initTabs();
+    
+    // File upload (receipt mode)
     elements.receiptFile.addEventListener('change', handleFileSelect);
     elements.removeFile.addEventListener('click', handleRemoveFile);
+    
+    // Manual file upload
+    if (elements.manualReceiptFile) {
+        elements.manualReceiptFile.addEventListener('change', handleManualFileSelect);
+    }
+    if (elements.manualRemoveFile) {
+        elements.manualRemoveFile.addEventListener('click', handleManualRemoveFile);
+    }
+    
+    // Set default date for manual entry
+    if (elements.manualDate) {
+        elements.manualDate.value = new Date().toISOString().split('T')[0];
+    }
     
     // Drag and drop
     elements.fileUploadArea.addEventListener('dragover', (e) => {
