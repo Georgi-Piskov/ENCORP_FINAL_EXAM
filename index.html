@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechCorp - Expense Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-receipt"></i>
+                <span>TechCorp Expense Tracker</span>
+            </div>
+            <div class="user-status" id="userStatus">
+                <span class="status-dot offline"></span>
+                <span>Не сте влезли</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Login Section -->
+            <section class="card login-section" id="loginSection">
+                <h2><i class="fas fa-user-circle"></i> Идентификация на служител</h2>
+                <form id="loginForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">Име</label>
+                            <input type="text" id="firstName" placeholder="Въведете име" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Фамилия</label>
+                            <input type="text" id="lastName" placeholder="Въведете фамилия" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeId">Служебен номер (ID)</label>
+                        <input type="text" id="employeeId" placeholder="Напр. EMP001" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Вход
+                    </button>
+                </form>
+                <div class="login-message" id="loginMessage"></div>
+            </section>
+
+            <!-- Expense Form Section (Hidden until login) -->
+            <section class="card expense-section hidden" id="expenseSection">
+                <h2><i class="fas fa-plus-circle"></i> Нов разход</h2>
+                <form id="expenseForm">
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label>Снимка на касова бележка</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="receiptFile" accept=".jpg,.jpeg,.png,.webp,.gif">
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Плъзнете файл тук или кликнете за избор</p>
+                                <span class="file-types">JPG, JPEG, PNG, WEBP, GIF</span>
+                            </div>
+                            <div class="file-preview hidden" id="filePreview">
+                                <img id="previewImage" src="" alt="Preview">
+                                <button type="button" class="btn-remove" id="removeFile">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comment -->
+                    <div class="form-group">
+                        <label for="comment">Коментар / Описание</label>
+                        <textarea id="comment" rows="4" placeholder="Добавете допълнителна информация за разхода (търговец, вид разход, причина и т.н.)"></textarea>
+                        <small class="helper-text">Ако няма снимка, опишете разхода подробно тук.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="fas fa-paper-plane"></i> Изпрати разход
+                    </button>
+                </form>
+                <div class="expense-message" id="expenseMessage"></div>
+            </section>
+
+            <!-- History Section (Hidden until login) -->
+            <section class="card history-section hidden" id="historySection">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> История на разходите</h2>
+                    <button class="btn btn-secondary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Обнови
+                    </button>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-cards" id="summaryCards">
+                    <div class="summary-card total">
+                        <div class="summary-icon"><i class="fas fa-wallet"></i></div>
+                        <div class="summary-content">
+                            <span class="summary-label">Общо разходи</span>
+                            <span class="summary-value" id="totalAmount">0.00 лв</span>
+                        </div>
+                    </div>
+                    <div class="summary-card approved">
+                        <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="summary-content">
+                            <span class="summary-label">Одобрени</span>
+                            <span class="summary-value" id="approvedAmount">0.00 лв</span>
+                        </div>
+                    </div>
+                    <div class="summary-card pending">
+                        <div class="summary-icon"><i class="fas fa-clock"></i></div>
+                        <div class="summary-content">
+                            <span class="summary-label">Чакащи</span>
+                            <span class="summary-value" id="pendingAmount">0.00 лв</span>
+                        </div>
+                    </div>
+                    <div class="summary-card rejected">
+                        <div class="summary-icon"><i class="fas fa-times-circle"></i></div>
+                        <div class="summary-content">
+                            <span class="summary-label">Отказани</span>
+                            <span class="summary-value" id="rejectedAmount">0.00 лв</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="category-breakdown" id="categoryBreakdown">
+                    <h3><i class="fas fa-chart-pie"></i> Разбивка по категории</h3>
+                    <div class="category-list" id="categoryList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Expenses Table -->
+                <div class="expenses-table-wrapper">
+                    <table class="expenses-table" id="expensesTable">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Търговец</th>
+                                <th>Категория</th>
+                                <th>Сума</th>
+                                <th>Статус</th>
+                                <th>Детайли</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                    <div class="no-data hidden" id="noDataMessage">
+                        <i class="fas fa-inbox"></i>
+                        <p>Няма регистрирани разходи</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 TechCorp. Proof of Concept - Expense Tracker</p>
+        </footer>
+    </div>
+
+    <!-- Modal for expense details -->
+    <div class="modal hidden" id="detailsModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <h3><i class="fas fa-file-invoice"></i> Детайли за разхода</h3>
+            <div class="modal-body" id="modalBody">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Обработка...</p>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
