@@ -424,39 +424,62 @@ async function handleExpenseSubmit(e) {
             }
             
             const result = await response.json();
-            console.log('n8n response:', result); // Debug log
-            console.log('result.error:', result.error);
-            console.log('result.success:', result.success);
-            console.log('result.errorCode:', result.errorCode);
+            console.log('n8n FULL response:', JSON.stringify(result, null, 2)); // Full debug
+            
+            // n8n може да върне данните в различни формати
+            // Опитваме да намерим правилните данни
+            let data = result;
+            
+            // Ако е масив, вземаме първия елемент
+            if (Array.isArray(result)) {
+                data = result[0] || {};
+                console.log('Response is array, using first element');
+            }
+            // Ако има data property
+            if (result.data) {
+                data = result.data;
+                console.log('Using result.data');
+            }
+            // Ако има json property (понякога n8n го увива така)
+            if (result.json) {
+                data = result.json;
+                console.log('Using result.json');
+            }
+            
+            console.log('Extracted data:', data);
+            console.log('data.error:', data.error);
+            console.log('data.success:', data.success);
+            console.log('data.errorCode:', data.errorCode);
+            console.log('data.valid:', data.valid);
             
             // Проверяваме за грешка по няколко начина
-            const isError = result.error === true || 
-                           result.success === false || 
-                           result.errorCode === 'INVALID_RECEIPT' ||
-                           result.valid === false;
+            const isError = data.error === true || 
+                           data.success === false || 
+                           data.errorCode === 'INVALID_RECEIPT' ||
+                           data.valid === false;
             
             if (isError) {
                 // Показваме грешката с детайли ако има
-                let errorMessage = result.message || 'Грешка при обработка на разхода.';
-                if (result.details) {
-                    errorMessage += '\n\n📋 Детайли: ' + result.details;
+                let errorMessage = data.message || 'Грешка при обработка на разхода.';
+                if (data.details) {
+                    errorMessage += '\n\n📋 Детайли: ' + data.details;
                 }
-                if (result.error_reason) {
-                    errorMessage += '\n\n📋 Причина: ' + result.error_reason;
+                if (data.error_reason) {
+                    errorMessage += '\n\n📋 Причина: ' + data.error_reason;
                 }
-                if (result.suggestions && Array.isArray(result.suggestions)) {
-                    errorMessage += '\n\n💡 Съвети:\n• ' + result.suggestions.join('\n• ');
+                if (data.suggestions && Array.isArray(data.suggestions)) {
+                    errorMessage += '\n\n💡 Съвети:\n• ' + data.suggestions.join('\n• ');
                 }
                 showMessage(elements.expenseMessage, errorMessage, 'error');
             } else {
                 // Show appropriate message based on status
                 let messageType = 'success';
-                let message = result.message || 'Разходът е записан успешно!';
+                let message = data.message || 'Разходът е записан успешно!';
                 
-                if (result.expense && result.expense.status === 'Rejected') {
+                if (data.expense && data.expense.status === 'Rejected') {
                     messageType = 'error';
-                    message = `${result.message}\nПричина: ${result.expense.status_reason || 'Не отговаря на фирмената политика'}`;
-                } else if (result.expense && result.expense.status === 'Manual Review') {
+                    message = `${data.message}\nПричина: ${data.expense.status_reason || 'Не отговаря на фирмената политика'}`;
+                } else if (data.expense && data.expense.status === 'Manual Review') {
                     messageType = 'warning';
                 }
                 
