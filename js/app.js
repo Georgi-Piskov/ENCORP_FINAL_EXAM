@@ -69,6 +69,8 @@ const elements = {
     dirTotalCount: document.getElementById('dirTotalCount'),
     dirApprovedCount: document.getElementById('dirApprovedCount'),
     dirPendingCount: document.getElementById('dirPendingCount'),
+    pendingList: document.getElementById('pendingList'),
+    noPendingMessage: document.getElementById('noPendingMessage'),
     
     // Modal
     detailsModal: document.getElementById('detailsModal'),
@@ -825,6 +827,7 @@ function showDirectorDashboard() {
     if (elements.directorSection) {
         elements.directorSection.classList.remove('hidden');
         loadDirectorStats();
+        loadPendingApprovals();
     }
 }
 
@@ -985,6 +988,143 @@ function hideTypingIndicator() {
         indicator.remove();
     }
 }
+
+// =============================================
+// Pending Approvals Functions
+// =============================================
+
+async function loadPendingApprovals() {
+    if (!supabase || !elements.pendingList) return;
+    
+    try {
+        // Get all expenses with Manual Review status
+        const { data: pending, error } = await supabase
+            .from('expenses')
+            .select('*, users(first_name, last_name)')
+            .eq('status', 'Manual Review')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!pending || pending.length === 0) {
+            elements.pendingList.innerHTML = '';
+            elements.noPendingMessage.classList.remove('hidden');
+            return;
+        }
+        
+        elements.noPendingMessage.classList.add('hidden');
+        elements.pendingList.innerHTML = pending.map(expense => renderPendingItem(expense)).join('');
+        
+    } catch (error) {
+        console.error('Error loading pending approvals:', error);
+    }
+}
+
+function renderPendingItem(expense) {
+    const userName = expense.users 
+        ? `${expense.users.first_name} ${expense.users.last_name}`
+        : 'Неизвестен';
+    
+    const categoryName = CONFIG.CATEGORIES[expense.category] || expense.category || 'Други';
+    
+    return `
+        <div class="pending-item" id="pending-${expense.id}">
+            <div class="pending-info">
+                <div class="pending-merchant">${expense.merchant || 'Неизвестен търговец'}</div>
+                <div class="pending-details">
+                    <span><i class="fas fa-user"></i> ${userName}</span>
+                    <span><i class="fas fa-tag"></i> ${categoryName}</span>
+                    <span><i class="fas fa-calendar"></i> ${formatDate(expense.receipt_date)}</span>
+                </div>
+                <div class="pending-amount">${formatCurrency(expense.amount, expense.currency)}</div>
+                ${expense.status_reason ? `<div class="pending-reason"><i class="fas fa-info-circle"></i> ${expense.status_reason}</div>` : ''}
+                ${expense.description ? `<div class="pending-description" style="margin-top: 8px; font-size: 0.9rem; color: #666;"><i class="fas fa-comment"></i> ${expense.description}</div>` : ''}
+            </div>
+            <div class="pending-actions">
+                <button class="btn-approve" onclick="approveExpense('${expense.id}')">
+                    <i class="fas fa-check"></i> Одобри
+                </button>
+                <button class="btn-reject" onclick="rejectExpense('${expense.id}')">
+                    <i class="fas fa-times"></i> Откажи
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+async function approveExpense(expenseId) {
+    if (!supabase) return;
+    
+    try {
+        const { error } = await supabase
+            .from('expenses')
+            .update({ 
+                status: 'Approved',
+                status_reason: 'Ръчно одобрен от финансов директор'
+            })
+            .eq('id', expenseId);
+        
+        if (error) throw error;
+        
+        // Remove item from list with animation
+        const item = document.getElementById(`pending-${expenseId}`);
+        if (item) {
+            item.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                item.remove();
+                checkEmptyPending();
+                loadDirectorStats(); // Update stats
+            }, 300);
+        }
+        
+    } catch (error) {
+        console.error('Error approving expense:', error);
+        alert('Грешка при одобряване на разхода');
+    }
+}
+
+async function rejectExpense(expenseId) {
+    if (!supabase) return;
+    
+    const reason = prompt('Причина за отказ (незадължително):');
+    
+    try {
+        const { error } = await supabase
+            .from('expenses')
+            .update({ 
+                status: 'Rejected',
+                status_reason: reason || 'Отказан от финансов директор'
+            })
+            .eq('id', expenseId);
+        
+        if (error) throw error;
+        
+        // Remove item from list with animation
+        const item = document.getElementById(`pending-${expenseId}`);
+        if (item) {
+            item.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                item.remove();
+                checkEmptyPending();
+                loadDirectorStats(); // Update stats
+            }, 300);
+        }
+        
+    } catch (error) {
+        console.error('Error rejecting expense:', error);
+        alert('Грешка при отказване на разхода');
+    }
+}
+
+function checkEmptyPending() {
+    if (elements.pendingList && elements.pendingList.children.length === 0) {
+        elements.noPendingMessage.classList.remove('hidden');
+    }
+}
+
+// Make functions globally available
+window.approveExpense = approveExpense;
+window.rejectExpense = rejectExpense;
 
 // =============================================
 // Initialize Application

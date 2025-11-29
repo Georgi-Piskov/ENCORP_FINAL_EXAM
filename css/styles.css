@@ -915,6 +915,11 @@ input[type="date"]:focus {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateX(100px); }
+}
+
 .chat-message.user {
     flex-direction: row-reverse;
 }
@@ -1091,5 +1096,157 @@ input[type="date"]:focus {
     
     .quick-stat .stat-value {
         font-size: 1.2rem;
+    }
+}
+
+/* =============================================
+   Pending Approvals Section
+   ============================================= */
+
+.pending-approvals-section {
+    margin-top: var(--spacing-xl);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+}
+
+.pending-approvals-section h3 {
+    color: white;
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.pending-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.pending-item {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-md);
+    align-items: center;
+    box-shadow: var(--shadow);
+    animation: fadeIn 0.3s ease;
+}
+
+.pending-info {
+    color: var(--text-primary);
+}
+
+.pending-info .pending-merchant {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.pending-info .pending-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.pending-info .pending-details span {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.pending-info .pending-amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: var(--spacing-sm);
+}
+
+.pending-info .pending-reason {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #FEF3C7;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.85rem;
+    color: #92400E;
+}
+
+.pending-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.pending-actions .btn {
+    min-width: 120px;
+    justify-content: center;
+}
+
+.btn-approve {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: background 0.2s;
+}
+
+.btn-approve:hover {
+    background: #059669;
+}
+
+.btn-reject {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: background 0.2s;
+}
+
+.btn-reject:hover {
+    background: #DC2626;
+}
+
+.no-pending {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.no-pending i {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--success);
+}
+
+.no-pending p {
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .pending-item {
+        grid-template-columns: 1fr;
+    }
+    
+    .pending-actions {
+        flex-direction: row;
+        justify-content: flex-end;
     }
 }
