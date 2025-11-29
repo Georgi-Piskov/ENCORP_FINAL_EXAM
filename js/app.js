@@ -6,7 +6,8 @@
 const state = {
     currentUser: null,
     expenses: [],
-    isLoading: false
+    isLoading: false,
+    autoRefreshInterval: null
 };
 
 // DOM Elements
@@ -233,6 +234,9 @@ async function handleLogin(e) {
         // Load expenses
         await loadExpenses();
         
+        // Start auto-refresh every 30 seconds
+        startAutoRefresh();
+        
     } catch (error) {
         console.error('Login error:', error);
         showMessage(elements.loginMessage, 'Грешка при вход. Моля, опитайте отново.', 'error');
@@ -244,6 +248,9 @@ async function handleLogin(e) {
 function handleLogout() {
     state.currentUser = null;
     state.expenses = [];
+    
+    // Stop auto-refresh
+    stopAutoRefresh();
     
     // Reset UI
     updateUserStatus(false);
@@ -563,6 +570,37 @@ function resetExpenseForm() {
     const today = new Date().toISOString().split('T')[0];
     if (elements.manualDate) {
         elements.manualDate.value = today;
+    }
+}
+
+// =============================================
+// Auto-Refresh Functions
+// =============================================
+function startAutoRefresh() {
+    // Clear any existing interval
+    stopAutoRefresh();
+    
+    // Refresh every 30 seconds
+    state.autoRefreshInterval = setInterval(async () => {
+        if (state.currentUser && !state.isLoading) {
+            console.log('Auto-refreshing data...');
+            await loadExpenses();
+            
+            // If user is director, also refresh director stats and pending list
+            const isDirector = state.currentUser.is_admin === true || 
+                              (state.currentUser.employee_id && state.currentUser.employee_id.toUpperCase().startsWith('FIN'));
+            if (isDirector) {
+                await loadDirectorStats();
+                await loadPendingApprovals();
+            }
+        }
+    }, 30000); // 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (state.autoRefreshInterval) {
+        clearInterval(state.autoRefreshInterval);
+        state.autoRefreshInterval = null;
     }
 }
 
