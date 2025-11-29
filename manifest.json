@@ -1,0 +1,27 @@
+{
+    "name": "TechCorp Expense Tracker",
+    "short_name": "Разходи",
+    "description": "Система за проследяване на служебни разходи с AI разпознаване",
+    "start_url": "/ENCORP_FINAL_EXAM/",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ],
+    "categories": ["business", "finance", "productivity"],
+    "lang": "bg",
+    "dir": "ltr"
+}
