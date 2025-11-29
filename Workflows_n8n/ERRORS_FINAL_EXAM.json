@@ -1,0 +1,130 @@
+{
+  "name": "ERRORS_FINAL_EXAM",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05542c5f-69c8-466e-a375-5e4f6b609e82",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Извличаме информация за грешката\nconst error = $input.first().json;\n\nconst errorData = {\n  error_type: error.execution?.error?.name || 'Unknown Error',\n  error_message: error.execution?.error?.message || 'Неизвестна грешка',\n  workflow_name: error.workflow?.name || 'Unknown',\n  node_name: error.execution?.error?.node?.name || 'Unknown',\n  timestamp: new Date().toISOString(),\n  \n  // Опитваме се да вземем user данни ако има\n  user_id: error.execution?.data?.resultData?.runData?.Webhook?.[0]?.json?.body?.userId || null,\n  request_data: JSON.stringify(error.execution?.data?.resultData?.runData?.Webhook?.[0]?.json?.body || {})\n};\n\nreturn { json: errorData };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0e8c4ff4-476a-4200-9609-fe70757804f1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "tableId": "error_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "error_type",
+              "fieldValue": "=\t{{ $json.error_type }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "=\t{{ $json.error_message }}"
+            },
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $json.user_id }}"
+            },
+            {
+              "fieldId": "request_data",
+              "fieldValue": "={{ $json.request_data }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "1625f7d2-cf6f-4896-9712-b99bc2b87d6a",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "F4W4M3mi3uYM7lTC",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseKey": "// Respond to Webhook - Error {   \"success\": false,   \"error\": true,   \"message\": \"Възникна грешка при обработката. Моля, опитайте отново или се свържете с администратор.\",   \"errorCode\": \"PROCESSING_ERROR\" }"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "9220a5cb-6ad5-48f6-b851-b5dde9f6d9d1",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b9d0e315-465e-4257-8352-d719db96d077",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7204f8cf331ce45a25a617a4d887233056efe67a0537cd171194c6ba0ab4002"
+  },
+  "id": "fRbn68waawQwMsXV",
+  "tags": []
+}

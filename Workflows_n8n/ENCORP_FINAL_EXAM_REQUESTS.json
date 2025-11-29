@@ -1,0 +1,114 @@
+{
+  "name": "ENCORP_FINAL_EXAM_REQUESTS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "046befee-c209-4443-b8e2-2f648fca1241",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "c93a0f1f-a9e9-4005-a840-6be2d183820a",
+      "name": "Webhook",
+      "webhookId": "046befee-c209-4443-b8e2-2f648fca1241"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "expenses",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.expenseId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.body.action === 'approve' ? 'Approved' : 'Rejected' }}"
+            },
+            {
+              "fieldId": "status_reason",
+              "fieldValue": "MANUAL CHANGE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        192,
+        0
+      ],
+      "id": "a0f9d84f-1a85-4fc2-829b-7ba4e73008f9",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "F4W4M3mi3uYM7lTC",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Операцията е успешна\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        400,
+        0
+      ],
+      "id": "8f3d95d0-8e88-42f4-bc7d-c4b5e8a5cac6",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "95dfbbf4-fc54-4548-b41c-6cc012a4c1e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7204f8cf331ce45a25a617a4d887233056efe67a0537cd171194c6ba0ab4002"
+  },
+  "id": "Q2Kk13ClbItxUUw6",
+  "tags": []
+}
