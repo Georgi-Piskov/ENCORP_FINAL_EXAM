@@ -13,6 +13,9 @@ const CONFIG = {
     // n8n Director AI Chat Webhook URL
     N8N_DIRECTOR_CHAT_URL: 'https://n8n.simeontsvetanovn8nworkflows.site/webhook/4dd03ef4-c51a-467a-b718-d9cedc374fa0',
     
+    // n8n Approve/Reject Webhook URL
+    N8N_APPROVE_REJECT_URL: 'https://n8n.simeontsvetanovn8nworkflows.site/webhook/046befee-c209-4443-b8e2-2f648fca1241',
+    
     // File upload settings
     ALLOWED_FILE_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB

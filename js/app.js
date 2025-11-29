@@ -1119,91 +1119,93 @@ function renderPendingItem(expense) {
 }
 
 async function approveExpense(expenseId) {
-    if (!supabase) return;
-    
-    console.log('Approving expense:', expenseId);
+    console.log('Approving expense via n8n:', expenseId);
     
     try {
-        const { data, error } = await supabase
-            .from('expenses')
-            .update({ 
-                status: 'Approved',
-                status_reason: 'Ръчно одобрен от финансов директор'
+        const response = await fetch(CONFIG.N8N_APPROVE_REJECT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'approve',
+                expenseId: expenseId,
+                reason: 'Ръчно одобрен от финансов директор'
             })
-            .eq('id', expenseId)
-            .select();
+        });
         
-        if (error) throw error;
+        if (!response.ok) {
+            throw new Error('Webhook request failed');
+        }
         
-        console.log('Approve successful, updated:', data);
+        const result = await response.json();
+        console.log('Approve response:', result);
         
-        // Remove item from list with animation
-        const item = document.getElementById(`pending-${expenseId}`);
-        if (item) {
-            item.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(async () => {
-                item.remove();
-                checkEmptyPending();
-                await loadDirectorStats(); // Update stats
-            }, 300);
+        if (result.success) {
+            // Remove item from list with animation
+            const item = document.getElementById(`pending-${expenseId}`);
+            if (item) {
+                item.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(async () => {
+                    item.remove();
+                    checkEmptyPending();
+                    await loadDirectorStats();
+                }, 300);
+            }
+        } else {
+            throw new Error(result.message || 'Неуспешно одобрение');
         }
         
     } catch (error) {
         console.error('Error approving expense:', error);
-        alert('Грешка при одобряване на разхода');
+        alert('Грешка при одобряване на разхода: ' + error.message);
     }
 }
 
 async function rejectExpense(expenseId) {
-    if (!supabase) return;
-    
     const reason = prompt('Причина за отказ (незадължително):');
+    if (reason === null) return; // User cancelled
     
-    console.log('Rejecting expense:', expenseId, 'Type:', typeof expenseId, 'Reason:', reason);
+    console.log('Rejecting expense via n8n:', expenseId);
     
     try {
-        // First, check if the expense exists
-        const { data: existing, error: fetchError } = await supabase
-            .from('expenses')
-            .select('*')
-            .eq('id', expenseId)
-            .single();
+        const response = await fetch(CONFIG.N8N_APPROVE_REJECT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'reject',
+                expenseId: expenseId,
+                reason: reason || 'Отказан от финансов директор'
+            })
+        });
         
-        console.log('Found expense before update:', existing, 'Error:', fetchError);
-        
-        if (fetchError || !existing) {
-            throw new Error('Expense not found in database');
+        if (!response.ok) {
+            throw new Error('Webhook request failed');
         }
         
-        const { data, error } = await supabase
-            .from('expenses')
-            .update({ 
-                status: 'Rejected',
-                status_reason: reason || 'Отказан от финансов директор'
-            })
-            .eq('id', expenseId)
-            .select();
+        const result = await response.json();
+        console.log('Reject response:', result);
         
-        if (error) throw error;
-        
-        console.log('Reject successful, updated:', data);
-        
-        if (error) throw error;
-        
-        // Remove item from list with animation
-        const item = document.getElementById(`pending-${expenseId}`);
-        if (item) {
-            item.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(async () => {
-                item.remove();
-                checkEmptyPending();
-                await loadDirectorStats(); // Update stats
-            }, 300);
+        if (result.success) {
+            // Remove item from list with animation
+            const item = document.getElementById(`pending-${expenseId}`);
+            if (item) {
+                item.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(async () => {
+                    item.remove();
+                    checkEmptyPending();
+                    await loadDirectorStats();
+                }, 300);
+            }
+        } else {
+            throw new Error(result.message || 'Неуспешен отказ');
         }
         
     } catch (error) {
         console.error('Error rejecting expense:', error);
-        alert('Грешка при отказване на разхода');
+        alert('Грешка при отказване на разхода: ' + error.message);
     }
 }
 
