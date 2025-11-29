@@ -34,6 +34,7 @@ const elements = {
     
     // Manual Entry Fields
     manualMerchant: document.getElementById('manualMerchant'),
+    manualReceiptNumber: document.getElementById('manualReceiptNumber'),
     manualDate: document.getElementById('manualDate'),
     manualAmount: document.getElementById('manualAmount'),
     manualCurrency: document.getElementById('manualCurrency'),
@@ -377,6 +378,7 @@ async function handleExpenseSubmit(e) {
     } else {
         // Manual mode - validate required fields
         const merchant = elements.manualMerchant.value.trim();
+        const receiptNumber = elements.manualReceiptNumber ? elements.manualReceiptNumber.value.trim() : '';
         const date = elements.manualDate.value;
         const amount = elements.manualAmount.value;
         const currency = elements.manualCurrency.value;
@@ -395,6 +397,7 @@ async function handleExpenseSubmit(e) {
         }
         
         formData.append('merchant', merchant);
+        formData.append('receiptNumber', receiptNumber);
         formData.append('date', date);
         formData.append('amount', amount);
         formData.append('currency', currency);

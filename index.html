@@ -100,15 +100,15 @@
                                 <input type="text" id="manualMerchant" placeholder="Напр. Lidl, OMV, Happy...">
                             </div>
                             <div class="form-group">
-                                <label for="manualDate">Дата на разхода *</label>
-                                <input type="date" id="manualDate">
+                                <label for="manualReceiptNumber">Номер на касова бележка</label>
+                                <input type="text" id="manualReceiptNumber" placeholder="Напр. 0001234567">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="manualAmount">Сума *</label>
-                                <input type="number" id="manualAmount" step="0.01" min="0" placeholder="0.00">
+                                <label for="manualDate">Дата на разхода *</label>
+                                <input type="date" id="manualDate">
                             </div>
                             <div class="form-group">
                                 <label for="manualCurrency">Валута</label>
@@ -117,6 +117,13 @@
                                     <option value="EUR">EUR (€)</option>
                                     <option value="USD">USD ($)</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="manualAmount">Сума *</label>
+                                <input type="number" id="manualAmount" step="0.01" min="0" placeholder="0.00">
                             </div>
                         </div>
 
