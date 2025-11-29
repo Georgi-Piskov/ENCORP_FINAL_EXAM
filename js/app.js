@@ -60,6 +60,16 @@ const elements = {
     expensesTableBody: document.getElementById('expensesTableBody'),
     noDataMessage: document.getElementById('noDataMessage'),
     
+    // Director Dashboard
+    directorSection: document.getElementById('directorSection'),
+    chatMessages: document.getElementById('chatMessages'),
+    chatInput: document.getElementById('chatInput'),
+    sendChatBtn: document.getElementById('sendChatBtn'),
+    dirTotalExpenses: document.getElementById('dirTotalExpenses'),
+    dirTotalCount: document.getElementById('dirTotalCount'),
+    dirApprovedCount: document.getElementById('dirApprovedCount'),
+    dirPendingCount: document.getElementById('dirPendingCount'),
+    
     // Modal
     detailsModal: document.getElementById('detailsModal'),
     modalClose: document.getElementById('modalClose'),
@@ -197,6 +207,16 @@ async function handleLogin(e) {
         elements.expenseSection.classList.remove('hidden');
         elements.historySection.classList.remove('hidden');
         
+        // Check if user is admin/director (is_admin flag OR ID starts with FIN)
+        const isDirector = user.is_admin === true || 
+                          (user.employee_id && user.employee_id.toUpperCase().startsWith('FIN'));
+        
+        if (isDirector) {
+            showDirectorDashboard();
+            // Hide expense form for directors - they only view/analyze
+            elements.expenseSection.classList.add('hidden');
+        }
+        
         // Make login form read-only
         elements.firstName.disabled = true;
         elements.lastName.disabled = true;
@@ -225,6 +245,11 @@ function handleLogout() {
     updateUserStatus(false);
     elements.expenseSection.classList.add('hidden');
     elements.historySection.classList.add('hidden');
+    
+    // Hide director dashboard
+    if (elements.directorSection) {
+        elements.directorSection.classList.add('hidden');
+    }
     
     // Enable form
     elements.firstName.disabled = false;
@@ -778,6 +803,187 @@ function initEventListeners() {
             closeModal();
         }
     });
+    
+    // Director Chat
+    if (elements.sendChatBtn) {
+        elements.sendChatBtn.addEventListener('click', handleSendChat);
+    }
+    if (elements.chatInput) {
+        elements.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSendChat();
+            }
+        });
+    }
+}
+
+// =============================================
+// Director Dashboard Functions
+// =============================================
+
+function showDirectorDashboard() {
+    if (elements.directorSection) {
+        elements.directorSection.classList.remove('hidden');
+        loadDirectorStats();
+    }
+}
+
+async function loadDirectorStats() {
+    if (!supabase) return;
+    
+    try {
+        // Get all expenses for stats
+        const { data: expenses, error } = await supabase
+            .from('expenses')
+            .select('*');
+        
+        if (error) throw error;
+        
+        if (expenses && expenses.length > 0) {
+            const total = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            const approved = expenses.filter(e => e.status === 'Approved');
+            const pending = expenses.filter(e => e.status === 'Manual Review');
+            
+            if (elements.dirTotalExpenses) {
+                elements.dirTotalExpenses.textContent = formatCurrency(total);
+            }
+            if (elements.dirTotalCount) {
+                elements.dirTotalCount.textContent = expenses.length;
+            }
+            if (elements.dirApprovedCount) {
+                elements.dirApprovedCount.textContent = approved.length;
+            }
+            if (elements.dirPendingCount) {
+                elements.dirPendingCount.textContent = pending.length;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading director stats:', error);
+    }
+}
+
+async function handleSendChat() {
+    const message = elements.chatInput.value.trim();
+    if (!message) return;
+    
+    // Add user message to chat
+    addChatMessage(message, 'user');
+    elements.chatInput.value = '';
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    try {
+        // Check if webhook is configured
+        if (CONFIG.N8N_DIRECTOR_CHAT_URL === 'YOUR_DIRECTOR_CHAT_WEBHOOK_URL') {
+            hideTypingIndicator();
+            addChatMessage('⚠️ AI чатът не е конфигуриран. Моля, добавете N8N_DIRECTOR_CHAT_URL в config.js', 'assistant');
+            return;
+        }
+        
+        // Send to n8n webhook
+        const response = await fetch(CONFIG.N8N_DIRECTOR_CHAT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: message,
+                userId: state.currentUser?.id,
+                userName: `${state.currentUser?.first_name} ${state.currentUser?.last_name}`,
+                timestamp: new Date().toISOString()
+            })
+        });
+        
+        hideTypingIndicator();
+        
+        if (!response.ok) {
+            throw new Error('Chat request failed');
+        }
+        
+        const result = await response.json();
+        
+        // Extract the response message (handle various n8n response formats)
+        let botResponse = 'Не можах да обработя заявката.';
+        
+        if (typeof result === 'string') {
+            botResponse = result;
+        } else if (result.message) {
+            botResponse = result.message;
+        } else if (result.response) {
+            botResponse = result.response;
+        } else if (result.output) {
+            botResponse = result.output;
+        } else if (result.text) {
+            botResponse = result.text;
+        } else if (result.answer) {
+            botResponse = result.answer;
+        } else {
+            // Try to find any string value in the response
+            const keys = Object.keys(result);
+            for (const key of keys) {
+                if (typeof result[key] === 'string' && result[key].length > 10) {
+                    botResponse = result[key];
+                    break;
+                }
+            }
+        }
+        
+        addChatMessage(botResponse, 'assistant');
+        
+    } catch (error) {
+        hideTypingIndicator();
+        console.error('Chat error:', error);
+        addChatMessage('❌ Грешка при комуникация със сървъра. Моля, опитайте отново.', 'assistant');
+    }
+}
+
+function addChatMessage(message, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+    
+    const avatarIcon = sender === 'user' ? 'fa-user' : 'fa-robot';
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar"><i class="fas ${avatarIcon}"></i></div>
+        <div class="message-content">
+            <p>${formatChatMessage(message)}</p>
+        </div>
+    `;
+    
+    elements.chatMessages.appendChild(messageDiv);
+    elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+}
+
+function formatChatMessage(message) {
+    // Convert line breaks to <br> and handle basic markdown
+    return message
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+}
+
+function showTypingIndicator() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-message assistant';
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+        <div class="message-avatar"><i class="fas fa-robot"></i></div>
+        <div class="message-content">
+            <div class="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+    elements.chatMessages.appendChild(typingDiv);
+    elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) {
+        indicator.remove();
+    }
 }
 
 // =============================================

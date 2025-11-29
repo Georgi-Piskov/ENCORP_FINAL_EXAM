@@ -174,6 +174,60 @@
                 <div class="expense-message" id="expenseMessage"></div>
             </section>
 
+            <!-- Director Dashboard (Hidden - only for admins) -->
+            <section class="card director-section hidden" id="directorSection">
+                <h2><i class="fas fa-user-tie"></i> Директор Dashboard</h2>
+                <p class="director-intro">Добре дошли! Можете да задавате въпроси за разходите на компанията.</p>
+                
+                <!-- Chat Interface -->
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message assistant">
+                            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                            <div class="message-content">
+                                <p>Здравейте! Аз съм вашият AI асистент за финансов анализ. Можете да ме питате за:</p>
+                                <ul>
+                                    <li>Общи разходи на компанията</li>
+                                    <li>Разходи по служители</li>
+                                    <li>Одобрени/отказани/чакащи разходи</li>
+                                    <li>Разходи по категории</li>
+                                    <li>Тенденции и анализи</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="Задайте въпрос за разходите..." />
+                        <button type="button" id="sendChatBtn" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats for Director -->
+                <div class="director-quick-stats" id="directorQuickStats">
+                    <h3><i class="fas fa-chart-bar"></i> Бърз преглед</h3>
+                    <div class="quick-stats-grid">
+                        <div class="quick-stat">
+                            <span class="stat-label">Общо разходи</span>
+                            <span class="stat-value" id="dirTotalExpenses">-</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span class="stat-label">Брой записи</span>
+                            <span class="stat-value" id="dirTotalCount">-</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span class="stat-label">Одобрени</span>
+                            <span class="stat-value" id="dirApprovedCount">-</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span class="stat-label">Чакащи</span>
+                            <span class="stat-value" id="dirPendingCount">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- History Section (Hidden until login) -->
             <section class="card history-section hidden" id="historySection">
                 <div class="section-header">
