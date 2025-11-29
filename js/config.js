@@ -11,7 +11,7 @@ const CONFIG = {
     N8N_WEBHOOK_URL: 'https://n8n.simeontsvetanovn8nworkflows.site/webhook/268ee00b-678c-4902-acb1-e3fcc5fb1e63',
     
     // n8n Director AI Chat Webhook URL
-    N8N_DIRECTOR_CHAT_URL: 'YOUR_DIRECTOR_CHAT_WEBHOOK_URL',
+    N8N_DIRECTOR_CHAT_URL: 'https://n8n.simeontsvetanovn8nworkflows.site/webhook/4dd03ef4-c51a-467a-b718-d9cedc374fa0',
     
     // File upload settings
     ALLOWED_FILE_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
