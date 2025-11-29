@@ -424,30 +424,38 @@ async function handleExpenseSubmit(e) {
             }
             
             const result = await response.json();
-            console.log('n8n FULL response:', result);
+            console.log('n8n RAW response:', JSON.stringify(result));
             
-            // n8n може да върне данните в различни формати
-            let data = result;
+            // Функция за извличане на реалните данни от n8n отговора
+            function extractData(obj) {
+                if (!obj || typeof obj !== 'object') return obj;
+                
+                // Ако има директно error или success поле, това са данните
+                if (obj.hasOwnProperty('error') || obj.hasOwnProperty('success') || obj.hasOwnProperty('errorCode')) {
+                    return obj;
+                }
+                
+                // Ако е масив, вземаме първия елемент
+                if (Array.isArray(obj)) {
+                    return extractData(obj[0]);
+                }
+                
+                // Вземаме първия ключ и проверяваме дали стойността е обект
+                const keys = Object.keys(obj);
+                if (keys.length >= 1) {
+                    const firstValue = obj[keys[0]];
+                    if (firstValue && typeof firstValue === 'object') {
+                        // Рекурсивно извличаме
+                        return extractData(firstValue);
+                    }
+                }
+                
+                return obj;
+            }
             
-            // Ако е масив, вземаме първия елемент
-            if (Array.isArray(result)) {
-                data = result[0] || {};
-            }
-            // Ако има числов ключ (0, 1, etc.) - n8n понякога връща така
-            if (result['0']) {
-                data = result['0'];
-            }
-            // Ако има ключ 'i' (от screenshot-а)
-            if (result.i !== undefined) {
-                data = result.i;
-            }
-            // Ако първият ключ е число или буква, вземаме стойността му
-            const keys = Object.keys(result);
-            if (keys.length === 1 && result[keys[0]] && typeof result[keys[0]] === 'object') {
-                data = result[keys[0]];
-            }
-            
-            console.log('Extracted data:', data);
+            let data = extractData(result);
+            console.log('Extracted data:', JSON.stringify(data));
+            console.log('data.error:', data.error, 'data.success:', data.success, 'data.errorCode:', data.errorCode);
             
             // Проверяваме за грешка
             const isError = data.error === true || 
@@ -455,7 +463,7 @@ async function handleExpenseSubmit(e) {
                            data.errorCode === 'INVALID_RECEIPT' ||
                            data.valid === false;
             
-            console.log('isError:', isError);
+            console.log('isError result:', isError);
             
             if (isError) {
                 // Показваме грешката с детайли
